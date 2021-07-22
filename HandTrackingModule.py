@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
-
+import osascript
+from math import sqrt
 import time
 
 
@@ -28,8 +29,7 @@ class handDetector():
 
     def findPosition(self, img, handNo=0, draw=True):
         lmList = []
-        draw_list = [4, 8, 12, 16, 20]
-        positions = []
+        vol_max = img.shape[0]//2
         if self.results.multi_hand_landmarks:
             myHand = self.results.multi_hand_landmarks[handNo]
             for id, lm in enumerate(myHand.landmark):
@@ -39,14 +39,19 @@ class handDetector():
                 # print(cx, cy)
                 lmList.append([id, cx, cy])
                 if draw:
-                    cv2.circle(img, (cx, cy), 10, (255, 0, 255), cv2.FILLED)
-                if id in draw_list:
-                    cv2.putText(img, "{}".format(id), (cx, cy), cv2.FONT_HERSHEY_SIMPLEX, 1, 25)
-                    positions.append((cx, cy))
-            for index, item in enumerate(positions):
-                if index == len(positions)-1:
-                    break
-                cv2.line(img, item, positions[index+1], (index*20, 0, 255-index*20), 3)
+                    cv2.circle(img, (cx, cy), 4, (255, 0, 255), cv2.FILLED)
+                if id == 4:
+                    vol_s = (cx, cy)
+                if id == 8:
+                    vol_e = (cx, cy)
+
+            vol_bar_len = sqrt((vol_e[1] - vol_s[1])**2 + (vol_e[0] - vol_s[0])**2)
+            cv2.line(img, vol_s, vol_e, (0, 0, 255), 2)
+            target_volume = min(100*vol_bar_len//vol_max, 100)
+            cv2.putText(img, "{}".format(target_volume), (40, 640), cv2.FONT_HERSHEY_SIMPLEX, 1, 25)
+            cv2.line(img, (40, 600), (40, 600-3*int(target_volume)), (0, 0, 255), 20)
+            vol = "set volume output volume " + str(target_volume)
+            # osascript.osascript(vol)
 
         return lmList
 
