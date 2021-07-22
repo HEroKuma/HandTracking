@@ -3,6 +3,7 @@ import mediapipe as mp
 
 import time
 
+
 class handDetector():
     def __init__(self, mode=False, maxHands=2, detectionCon=.5, trackCon=.5):
         self.mode = mode
@@ -13,7 +14,6 @@ class handDetector():
         self.mpHands = mp.solutions.hands
         self.hands = self.mpHands.Hands(self.mode, self.maxHands, self.detectionCon, self.trackCon)
         self.mpDraw = mp.solutions.drawing_utils
-
 
     def findHands(self, img, draw=True):
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -27,8 +27,9 @@ class handDetector():
         return img
 
     def findPosition(self, img, handNo=0, draw=True):
-
         lmList = []
+        draw_list = [4, 8, 12, 16, 20]
+        positions = []
         if self.results.multi_hand_landmarks:
             myHand = self.results.multi_hand_landmarks[handNo]
             for id, lm in enumerate(myHand.landmark):
@@ -39,6 +40,13 @@ class handDetector():
                 lmList.append([id, cx, cy])
                 if draw:
                     cv2.circle(img, (cx, cy), 10, (255, 0, 255), cv2.FILLED)
+                if id in draw_list:
+                    cv2.putText(img, "{}".format(id), (cx, cy), cv2.FONT_HERSHEY_SIMPLEX, 1, 25)
+                    positions.append((cx, cy))
+            for index, item in enumerate(positions):
+                if index == len(positions)-1:
+                    break
+                cv2.line(img, item, positions[index+1], (index*20, 0, 255-index*20), 3)
 
         return lmList
 
@@ -63,6 +71,7 @@ def main():
 
         cv2.imshow("Image", img)
         cv2.waitKey(1)
+
 
 if __name__ == "__main__":
     main()
